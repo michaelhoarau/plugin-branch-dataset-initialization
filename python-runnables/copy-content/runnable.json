@@ -1,0 +1,41 @@
+{
+    "meta": {
+        "label": "Clone branch datasets",
+        "description": "Compare dataset types and storage locations with a selected source project, then clone output tables or stream filesystem output datasets into the current branch. Dry run previews the mapping; run mode skips input-only datasets and shared locations, and replaces existing target data only when overwrite is enabled.",
+        "icon": "fas fa-code-branch"
+    },
+    "impersonate": false,
+    "params": [
+        {
+            "name": "dry_run",
+            "label": "Dry run",
+            "type": "BOOLEAN",
+            "defaultValue": true,
+            "description": "Preview dataset mappings without creating or replacing tables or files."
+        },
+        {
+            "name": "overwrite_existing",
+            "label": "Overwrite existing datasets",
+            "type": "BOOLEAN",
+            "defaultValue": false,
+            "description": "Replace existing target Snowflake tables or Filesystem data in run mode. Otherwise, skip targets containing tables or files."
+        },
+        {
+            "name": "branch_project_key",
+            "label": "Datasets source",
+            "type": "SELECT",
+            "getChoicesFromPython": true,
+            "mandatory": false,
+            "description": "Select the master project or another branch as the source. Datasets are matched by name."
+        }
+    ],
+    "permissions": [
+        "READ_CONF"
+    ],
+    "resultType": "HTML",
+    "resultLabel": "Project datasets",
+    "macroRoles": [],
+    "paramsTemplate": "branch-parameters.html",
+    "paramsModule": "branchtablesinitialization.parameters",
+    "paramsPythonSetup": "branch-parameters.py"
+}

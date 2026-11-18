@@ -1,0 +1,43 @@
+<div ng-controller="BranchTablesParametersController">
+    <div role="note" style="margin-bottom:16px;line-height:1.5;">
+        <i class="fas fa-exclamation-triangle" aria-hidden="true" style="color:#c62828;margin-right:6px;"></i>
+        <strong>Warning:</strong> <i>run this macro <b>immediately</b> after creating the branch, when the risk of 
+        discrepancies with the source datasets is lower. Avoid running it while source datasets are being
+        rebuilt.</i>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="branch-tables-dry-run">Dry run</label>
+        <div class="controls">
+            <input id="branch-tables-dry-run" type="checkbox" ng-model="config.dry_run" />
+        </div>
+    </div>
+    <div class="control-group" ng-if="!config.dry_run">
+        <label class="control-label" for="branch-tables-overwrite">Overwrite existing datasets</label>
+        <div class="controls">
+            <input id="branch-tables-overwrite" type="checkbox" ng-model="config.overwrite_existing" />
+            <span class="help-inline">Replace existing target data in run mode. When unchecked, existing tables or files are skipped.</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <span class="control-label">Master project</span>
+        <div class="controls">
+            <span ng-if="loading">Loading project information…</span>
+            <span ng-if="!loading && masterKey" ng-bind="masterName + ' (' + masterKey + ')'"></span>
+            <span ng-if="!loading && !masterKey">Unavailable</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="branch-tables-branch">Branch</label>
+        <div class="controls">
+            <select id="branch-tables-branch" ng-model="config.branch_project_key"
+                    ng-options="choice.value as choice.label for choice in choices"
+                    ng-disabled="loading || error || !choices.length">
+                <option value="">Select a branch</option>
+            </select>
+            <p ng-if="!loading && !error && !choices.length">No other associated branch projects are available.</p>
+        </div>
+    </div>
+    <p ng-if="error" class="text-error" ng-bind="error" role="alert"></p>
+    <p ng-repeat="warning in warnings track by $index" ng-bind="warning" role="status"></p>
+    <button type="button" class="btn btn-default" ng-click="loadBranches()" ng-disabled="loading">Refresh branches</button>
+</div>
