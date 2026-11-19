@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python-lib"))
-from branchtablesinitialization.dataset_report import render_dataset_table
+from branchdatasync.dataset_report import render_dataset_table
 
 
 class DatasetReportTests(unittest.TestCase):
@@ -18,7 +18,7 @@ class DatasetReportTests(unittest.TestCase):
         self.source = Mock(spec=["list_datasets", "get_dataset", "project_key"])
         self.source.project_key = "SOURCE"
         self.source.list_datasets.return_value = [SimpleNamespace(name="orders<&>", type="Filesystem")]
-        location_patch = patch("branchtablesinitialization.dataset_report.get_dataset_location")
+        location_patch = patch("branchdatasync.dataset_report.get_dataset_location")
         self.location = location_patch.start()
         self.location.side_effect = lambda key, name: key + "." + name
         self.addCleanup(location_patch.stop)
@@ -105,15 +105,15 @@ class DatasetReportTests(unittest.TestCase):
         self.assertNotIn(">input</td>", html)
 
     def test_dry_run_does_not_dispatch_copy_handlers(self):
-        with patch("branchtablesinitialization.dataset_report.copy_dataset") as dispatcher:
+        with patch("branchdatasync.dataset_report.copy_dataset") as dispatcher:
             html = render_dataset_table(self.current, self.source)
         dispatcher.assert_not_called()
         self.assertNotIn(">Rows copied</th>", html)
 
     def test_run_mode_displays_result_without_writing_data(self):
         self.current.list_datasets.return_value[0].type = "Filesystem"
-        from branchtablesinitialization.copy_operations import CopyResult
-        with patch("branchtablesinitialization.dataset_report.copy_dataset", return_value=CopyResult("Success", 12, "Filesystem data copied")):
+        from branchdatasync.copy_operations import CopyResult
+        with patch("branchdatasync.dataset_report.copy_dataset", return_value=CopyResult("Success", 12, "Filesystem data copied")):
             html = render_dataset_table(self.current, self.source, dry_run=False)
         self.assertIn(">Success</td>", html)
         self.assertIn(">12</td>", html)
@@ -122,8 +122,8 @@ class DatasetReportTests(unittest.TestCase):
         self.source.get_dataset.assert_not_called()
 
     def test_overwrite_setting_is_passed_to_copy_dispatcher(self):
-        from branchtablesinitialization.copy_operations import CopyResult
-        with patch("branchtablesinitialization.dataset_report.copy_dataset", return_value=CopyResult("Success", 1, "Copied")) as dispatcher:
+        from branchdatasync.copy_operations import CopyResult
+        with patch("branchdatasync.dataset_report.copy_dataset", return_value=CopyResult("Success", 1, "Copied")) as dispatcher:
             render_dataset_table(self.current, self.source, dry_run=False, overwrite_existing=True)
         self.assertTrue(dispatcher.call_args.args[0].overwrite_existing)
 
@@ -131,7 +131,7 @@ class DatasetReportTests(unittest.TestCase):
         self.current.list_recipes.return_value = [{
             "inputs": {"main": {"items": [{"ref": "orders<&>"}]}}, "outputs": {},
         }]
-        with patch("branchtablesinitialization.dataset_report.copy_dataset") as dispatcher:
+        with patch("branchdatasync.dataset_report.copy_dataset") as dispatcher:
             html = render_dataset_table(self.current, self.source, dry_run=False)
         dispatcher.assert_not_called()
         self.assertIn(">Skipped</td>", html)
@@ -143,7 +143,7 @@ class DatasetReportTests(unittest.TestCase):
         self.assertIn("No matching dataset", html)
 
     def test_result_colors_apply_only_to_dataset_cells(self):
-        from branchtablesinitialization.copy_operations import CopyResult
+        from branchdatasync.copy_operations import CopyResult
         cases = [
             (CopyResult("Success", 12, "Copied"), "#e8f5e9"),
             (CopyResult("Failure", None, "Copy failed"), "#ffebee"),
@@ -152,7 +152,7 @@ class DatasetReportTests(unittest.TestCase):
         ]
         for result, color in cases:
             with self.subTest(status=result.status):
-                with patch("branchtablesinitialization.dataset_report.copy_dataset", return_value=result):
+                with patch("branchdatasync.dataset_report.copy_dataset", return_value=result):
                     html = render_dataset_table(self.current, self.source, dry_run=False)
                 rows = re.findall(r'<tr style=.*?</tr>', html)
                 self.assertEqual(rows[0].count("background-color:" + color), 6)
@@ -175,9 +175,9 @@ class DatasetReportTests(unittest.TestCase):
         self.assertEqual(html.count("background-color:#ffebee"), 3)
 
     def test_run_shared_location_warning_is_inside_details_without_second_row(self):
-        from branchtablesinitialization.copy_operations import CopyResult
+        from branchdatasync.copy_operations import CopyResult
         result = CopyResult("Skipped", 0, "Shared source and target location.", shared_location=True)
-        with patch("branchtablesinitialization.dataset_report.copy_dataset", return_value=result):
+        with patch("branchdatasync.dataset_report.copy_dataset", return_value=result):
             html = render_dataset_table(self.current, self.source, dry_run=False)
         rows = re.findall(r'<tr style=.*?</tr>', html)
         self.assertEqual(len(rows), 1)

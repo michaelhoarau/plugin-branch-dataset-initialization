@@ -6,8 +6,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python-lib"))
-from branchtablesinitialization.copy_operations import CopyContext, copy_dataset
-from branchtablesinitialization.snowflake_copy import _identifier_parts, _CONTEXT_SQL
+from branchdatasync.copy_operations import CopyContext, copy_dataset
+from branchdatasync.snowflake_copy import _identifier_parts, _CONTEXT_SQL
 
 
 def frame(rows):

@@ -7,8 +7,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python-lib"))
-from branchtablesinitialization.dataset_location import get_dataset_location
-from branchtablesinitialization.report_html import location_row
+from branchdatasync.dataset_location import get_dataset_location
+from branchdatasync.report_html import location_row
 
 
 class DatasetLocationTests(unittest.TestCase):

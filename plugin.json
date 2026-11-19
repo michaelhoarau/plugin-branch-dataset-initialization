@@ -1,9 +1,9 @@
 {
-    "id": "branch-tables-initialization",
+    "id": "branch-data-sync",
     "version": "0.1.0",
     "meta": {
-        "label": "Branch tables initialization",
-        "description": "Initialize datasets in duplicated Dataiku project branches from a related source project using Snowflake table clones or streamed Filesystem copies. Preview dataset mappings with dry run and control whether existing target data is overwritten.",
+        "label": "Branch datasets synchronization",
+        "description": "Synchronize datasets in duplicated Dataiku project branches from a related source project using Snowflake table clones or streamed Filesystem copies. Preview dataset mappings with dry run and control whether existing target data is overwritten.",
         "author": "michael.hoarau",
         "provider": "michael.hoarau",
         "icon": "fas fa-code-branch",

@@ -1,6 +1,6 @@
 {
     "meta": {
-        "label": "Clone branch datasets",
+        "label": "Synchronize datasets across branches",
         "description": "Compare dataset types and storage locations with a selected source project, then clone output tables or stream filesystem output datasets into the current branch. Dry run previews the mapping; run mode skips input-only datasets and shared locations, and replaces existing target data only when overwrite is enabled.",
         "icon": "fas fa-code-branch"
     },

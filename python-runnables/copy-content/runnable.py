@@ -5,9 +5,9 @@ import dataiku
 from dataiku.runnables import Runnable
 from html import escape
 
-from branchtablesinitialization.project_family import discover_project_family
-from branchtablesinitialization.dataset_report import render_dataset_table
-from branchtablesinitialization.report_html import table_start, table_row, table_end, wrap_report
+from branchdatasync.project_family import discover_project_family
+from branchdatasync.dataset_report import render_dataset_table
+from branchdatasync.report_html import table_start, table_row, table_end, wrap_report
 
 
 class MyRunnable(Runnable):

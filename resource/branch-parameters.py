@@ -1,6 +1,6 @@
 def do(payload, config, plugin_config, inputs):
     import dataiku
-    from branchtablesinitialization.project_family import discover_project_family
+    from branchdatasync.project_family import discover_project_family
 
     # DSS supplies the current project context:
     project_key = dataiku.default_project_key()

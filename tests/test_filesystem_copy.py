@@ -6,8 +6,8 @@ import unittest
 from unittest.mock import Mock, MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python-lib"))
-from branchtablesinitialization.copy_operations import CopyContext, copy_dataset
-from branchtablesinitialization.filesystem_copy import _has_files
+from branchdatasync.copy_operations import CopyContext, copy_dataset
+from branchdatasync.filesystem_copy import _has_files
 
 
 class FilesystemCopyTests(unittest.TestCase):
