@@ -121,6 +121,37 @@ class S3CopyTests(unittest.TestCase):
             self.assertEqual(call.kwargs["aws_session_token"], name + "-token")
             self.assertEqual(call.kwargs["region_name"], "eu-west-1")
 
+    def test_connection_names_fall_back_to_dataset_settings(self):
+        for dataset, settings, name in (
+                (self.source, self.source_settings, "read"),
+                (self.target, self.target_settings, "write")):
+            dataset.get_location_info.return_value["info"].pop("connectionName")
+            settings["params"]["connection"] = name
+        result = copy_dataset(self.context)
+        self.assertEqual(result.status, "Success")
+        self.assertEqual([call.args[0] for call in self.api.get_connection.call_args_list], ["read", "write"])
+        for dataset in (self.source, self.target):
+            dataset.get_location_info.assert_called_once_with(sensitive_info=False)
+
+    def test_connection_name_fallback_can_be_used_on_only_one_side(self):
+        self.target.get_location_info.return_value["info"]["connectionName"] = None
+        self.target_settings["params"]["connection"] = "write"
+        self.assertEqual(copy_dataset(self.context).status, "Success")
+        self.assertEqual([call.args[0] for call in self.api.get_connection.call_args_list], ["read", "write"])
+
+    def test_missing_connection_name_identifies_the_dataset_side(self):
+        for dataset, side in ((self.source, "Source"), (self.target, "Target")):
+            with self.subTest(side=side):
+                info = dataset.get_location_info.return_value["info"]
+                name = info.pop("connectionName")
+                with self.assertLogs(level="ERROR"):
+                    result = copy_dataset(self.context)
+                info["connectionName"] = name
+                self.assertEqual((result.status, result.rows_copied), ("Failure", 0))
+                self.assertIn(side + " S3 connection name", result.message)
+                self.assertIn("params.connection", result.message)
+                self.assert_no_writes()
+
     def test_unreadable_credentials_fail_without_using_local_aws_credentials(self):
         self.connections["write"].get_info().get_aws_credential.side_effect = PermissionError("sensitive-secret")
         with self.assertLogs(level="ERROR") as logs:

@@ -153,10 +153,17 @@ def copy_s3_objects(context):
                 if settings[0].get(field) != settings[1].get(field):
                     raise ValueError("Source and target {} must match for byte-preserving S3 copies.".format(field))
             clients = []
-            for location in (source_location, target_location):
-                name = location["info"].get("connectionName")
-                if not name:
-                    raise ValueError("S3 connection name could not be resolved.")
+            for side, location, dataset_settings in zip(
+                    ("Source", "Target"), (source_location, target_location), settings):
+                # Location metadata may omit the connection name, especially
+                # when requested without sensitive connection information.
+                name = (location["info"].get("connectionName")
+                        or dataset_settings.get("params", {}).get("connection"))
+                if not isinstance(name, str) or not name.strip():
+                    raise ValueError(
+                        "{} S3 connection name could not be resolved. "
+                        "Check the dataset connection in its settings (params.connection).".format(side)
+                    )
                 clients.append(_s3_client(api, name, stack))
             (source_client, _), (target_client, extra_args) = clients
             target_objects = _objects(target_client, target_root)
