@@ -26,7 +26,7 @@ def table_start(headers, label):
     return html + '</tr></thead><tbody>'
 
 
-def table_row(values, index, current=False, monospace=(), numeric=(), emphasized=(), muted=False, tone=None, shared_location_column=None, nowrap=(), word_wrap=()):
+def table_row(values, index, current=False, monospace=(), numeric=(), emphasized=(), muted=False, tone=None, shared_location_column=None, nowrap=(), word_wrap=(), emphasis_color='#1672b8'):
     """Render one escaped data row with optional cell and row styling.
 
     Args:
@@ -35,7 +35,8 @@ def table_row(values, index, current=False, monospace=(), numeric=(), emphasized
         current (bool): Highlight the row and badge its first cell as current.
         monospace (tuple[int]): Zero-based columns using a monospace font.
         numeric (tuple[int]): Zero-based columns using right-aligned numbers.
-        emphasized (tuple[int]): Zero-based columns shown in bold blue.
+        emphasized (tuple[int]): Zero-based columns shown in bold.
+        emphasis_color (str): Text color for emphasized cells, blue by default.
         muted (bool): Override row colors with grey, including emphasized cells.
         tone (str or None): Optional success, warning, or error background for
             this row's cells only, with a matching status dot in the first cell.
@@ -91,7 +92,7 @@ def table_row(values, index, current=False, monospace=(), numeric=(), emphasized
                 'margin-left:7px;vertical-align:middle;"></span>'
             ).format(labels[tone], labels[tone], color, highlight, color, edge, edge)
         if column in emphasized:
-            color = '#707780' if muted else '#1672b8'
+            color = '#707780' if muted else emphasis_color
             text = '<strong style="color:{};font-weight:700;">{}</strong>'.format(color, text)
 
         if current and column == 0:

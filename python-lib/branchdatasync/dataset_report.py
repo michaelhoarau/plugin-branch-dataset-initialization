@@ -159,7 +159,8 @@ def render_dataset_table(project, source_project=None, dry_run=True, overwrite_e
         shared_location = result is not None and result.status == "Skipped" and result.shared_location
         html += table_row(
             cells, index, monospace=(0,), numeric=(4,) if not dry_run else (),
-            emphasized=(2,) if dataset.type.casefold() == "snowflake" else (),
+            emphasized=(2,),
+            emphasis_color={"snowflake": "#1672b8", "s3": "#2e7d32"}.get(dataset.type.casefold(), "#000000"),
             muted=usage == "input",
             tone=tone,
             shared_location_column=5 if shared_location else None,
