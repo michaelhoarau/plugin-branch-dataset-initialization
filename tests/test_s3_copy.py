@@ -40,7 +40,10 @@ class S3CopyTests(unittest.TestCase):
         for name in ("read", "write"):
             info = Mock()
             info.get_aws_credential.return_value = self.credentials[name]
-            info.get_resolved_params.return_value = self.connection_params[name]
+            # S3 get_info responses omit resolvedParams. The real SDK indexes
+            # this absent field and raises KeyError rather than returning None.
+            info.get_resolved_params.side_effect = KeyError("resolvedParams")
+            info.get_params.return_value = self.connection_params[name]
             self.connections[name] = types.SimpleNamespace(get_info=lambda info=info: info)
         self.api.get_connection.side_effect = self.connections.__getitem__
         self.source_s3, self.target_s3 = Mock(), Mock()
@@ -121,6 +124,57 @@ class S3CopyTests(unittest.TestCase):
             self.assertEqual(call.kwargs["aws_session_token"], name + "-token")
             self.assertEqual(call.kwargs["region_name"], "eu-west-1")
 
+    def test_missing_resolved_parameters_fall_back_after_credential_lookup(self):
+        self.assertEqual(copy_dataset(self.context).status, "Success")
+        for name in ("read", "write"):
+            info = self.connections[name].get_info()
+            info.get_aws_credential.assert_called_once_with()
+            info.get_params.assert_called_once_with()
+
+    def test_null_resolved_parameters_also_use_raw_parameters(self):
+        for name in ("read", "write"):
+            info = self.connections[name].get_info()
+            info.get_resolved_params.side_effect = None
+            info.get_resolved_params.return_value = None
+        self.assertEqual(copy_dataset(self.context).status, "Success")
+
+    def test_available_resolved_parameters_are_preferred(self):
+        info = self.connections["write"].get_info()
+        info.get_resolved_params.side_effect = None
+        info.get_resolved_params.return_value = {"regionOrEndpoint": "us-west-2"}
+        self.assertEqual(copy_dataset(self.context).status, "Success")
+        self.assertEqual(self.boto3.client.call_args.kwargs["region_name"], "us-west-2")
+        info.get_params.assert_not_called()
+
+    def test_parameter_errors_are_not_reported_as_credential_errors(self):
+        self.connections["write"].get_info().get_params.side_effect = RuntimeError("sensitive-secret")
+        with self.assertLogs(level="ERROR") as logs:
+            result = copy_dataset(self.context)
+        self.assertEqual((result.status, result.rows_copied), ("Failure", 0))
+        self.assertIn("parameters (RuntimeError)", result.message)
+        self.assertIn("credentials were retrieved successfully", result.message)
+        self.assertNotIn("sensitive-secret", result.message + str(logs.output))
+        self.assert_no_writes()
+
+    def test_connection_access_errors_identify_connection_and_stage(self):
+        self.connections["write"].get_info = Mock(side_effect=PermissionError("sensitive-secret"))
+        with self.assertLogs(level="ERROR") as logs:
+            result = copy_dataset(self.context)
+        self.assertEqual(result.status, "Failure")
+        self.assertIn("connection 'write' details (PermissionError)", result.message)
+        self.assertNotIn("sensitive-secret", result.message + str(logs.output))
+        self.assert_no_writes()
+
+    def test_incomplete_credentials_fail_before_creating_aws_clients(self):
+        for credentials in (None, {}, {"accessKey": "key"}):
+            with self.subTest(credentials=credentials), self.assertLogs(level="ERROR"):
+                self.connections["read"].get_info().get_aws_credential.return_value = credentials
+                result = copy_dataset(self.context)
+                self.assertEqual((result.status, result.rows_copied), ("Failure", 0))
+                self.assertIn("incomplete AWS credentials", result.message)
+        self.boto3.client.assert_not_called()
+        self.assert_no_writes()
+
     def test_connection_names_fall_back_to_dataset_settings(self):
         for dataset, settings, name in (
                 (self.source, self.source_settings, "read"),
@@ -159,6 +213,7 @@ class S3CopyTests(unittest.TestCase):
         self.assertEqual((result.status, result.rows_copied), ("Failure", 0))
         self.assertNotIn("sensitive-secret", result.message + str(logs.output))
         self.assertIn("connection details", result.message)
+        self.assertIn("connection 'write' (PermissionError)", result.message)
         self.source_s3.close.assert_called_once()
         self.assert_no_writes()
 

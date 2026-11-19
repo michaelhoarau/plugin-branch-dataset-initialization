@@ -45,15 +45,47 @@ def _s3_client(api, connection_name, stack):
 
     try:
         info = api.get_connection(connection_name).get_info()
-        credentials = info.get_aws_credential()
-        params = info.get_resolved_params() or info.get_params()
-        if not credentials.get("accessKey") or not credentials.get("secretKey"):
-            raise ValueError("Missing resolved credentials")
-    except Exception:
+    except Exception as error:
         raise ValueError(
-            "Cannot obtain resolved S3 credentials from Dataiku. "
-            "The macro user needs permission to read connection details."
+            "Cannot read S3 connection {!r} details ({}). "
+            "Check connection details access for the macro's execution user.".format(
+                connection_name, type(error).__name__,
+            )
         ) from None
+
+    try:
+        credentials = info.get_aws_credential()
+    except Exception as error:
+        raise ValueError(
+            "Dataiku did not return AWS credentials for S3 connection {!r} ({}). "
+            "Check its authentication mode and credential resolution; "
+            "access to connection details alone does not confirm credentials are available.".format(
+                connection_name, type(error).__name__,
+            )
+        ) from None
+    if (not isinstance(credentials, dict)
+            or not all(isinstance(credentials.get(key), str) and credentials[key]
+                       for key in ("accessKey", "secretKey"))):
+        raise ValueError(
+            "Dataiku returned incomplete AWS credentials for S3 connection {!r}; "
+            "check its authentication mode and credential resolution.".format(connection_name)
+        )
+
+    try:
+        try:
+            # S3 responses may omit resolvedParams. The SDK indexes that key
+            # directly, so `get_resolved_params() or ...` cannot handle it.
+            params = info.get_resolved_params()
+        except (KeyError, AttributeError):
+            params = None
+        params = params or info.get_params()
+    except Exception as error:
+        raise ValueError(
+            "Cannot read S3 connection {!r} parameters ({}); "
+            "AWS credentials were retrieved successfully.".format(connection_name, type(error).__name__)
+        ) from None
+    if not isinstance(params, dict):
+        raise ValueError("Dataiku returned invalid S3 connection parameters.")
 
     region = params.get("regionOrEndpoint") or None
     if region and ("://" in region or "${" in region):
