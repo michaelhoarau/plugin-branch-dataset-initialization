@@ -86,9 +86,17 @@ def copy_filesystem(context):
     return stream_filesystem(context)
 
 
+def copy_s3(context):
+    """Copy S3 objects server-side; call only in run mode."""
+    from .s3_copy import copy_s3_objects
+
+    return copy_s3_objects(context)
+
+
 COPY_HANDLERS = {
     ("snowflake", "snowflake"): copy_snowflake,
     ("filesystem", "filesystem"): copy_filesystem,
+    ("s3", "s3"): copy_s3,
 }
 
 

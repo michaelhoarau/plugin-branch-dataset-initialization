@@ -11,7 +11,7 @@ from branchdatasync.report_html import table_start, table_row, table_end, wrap_r
 
 
 class MyRunnable(Runnable):
-    """Report branch mappings and initialize Snowflake or Filesystem datasets.
+    """Report branch mappings and initialize Snowflake, Filesystem, or S3 datasets.
 
     Dry run is enabled by default. Run mode delegates copying to type-specific
     handlers and reports each dataset's outcome alongside its storage mapping.
@@ -43,8 +43,9 @@ class MyRunnable(Runnable):
         Dry run only reads metadata. Run mode clones eligible Snowflake output
         tables, skipping input-only datasets and shared locations. Existing
         targets are replaced only when ``overwrite_existing`` is explicitly True.
-        Filesystem outputs are copied through Dataiku row streams, preserving
-        matching partition layouts and synchronizing the target schema.
+        Filesystem outputs are copied through Dataiku row streams. S3 objects are
+        copied server-side with matching formats and partition layouts. Both
+        synchronize the target schema; S3 row counts remain unavailable.
 
         Args:
             progress_callback (callable): DSS progress callback; currently unused.
@@ -85,7 +86,7 @@ class MyRunnable(Runnable):
         if dry_run:
             settings_html = "<p>Dry run: report only; no changes are made.</p>"
         else:
-            settings_html = "<p>Run: Snowflake outputs use database-side cloning. Filesystem outputs are streamed through Dataiku.</p>"
+            settings_html = "<p>Run: Snowflake outputs use database-side cloning. Filesystem outputs are streamed through Dataiku. S3 objects are copied server-side within S3.</p>"
             
         if selected_key:
             settings_html += "<p>Selected branch project: {}</p>".format(escape(selected_key))

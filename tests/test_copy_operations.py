@@ -20,6 +20,13 @@ class CopyOperationsTests(unittest.TestCase):
         self.assertEqual(result.status, "Success")
         self.assertEqual(result.rows_copied, 2)
 
+    def test_s3_dispatches_to_server_side_handler(self):
+        context = replace(self.context, source_type="S3", target_type="s3")
+        with patch("branchdatasync.s3_copy.copy_s3_objects", return_value=CopyResult("Success", 2, "Copied")) as handler:
+            result = copy_dataset(context)
+        handler.assert_called_once_with(context)
+        self.assertEqual((result.status, result.rows_copied), ("Success", 2))
+
     def test_dispatch_supplies_the_complete_context_and_supports_success_contract(self):
         handler = Mock(return_value=CopyResult("Success", 123, "Copied and verified."))
         with patch.dict("branchdatasync.copy_operations.COPY_HANDLERS", {("snowflake", "snowflake"): handler}):

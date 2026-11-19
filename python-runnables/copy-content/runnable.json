@@ -1,7 +1,7 @@
 {
     "meta": {
         "label": "Synchronize datasets across branches",
-        "description": "Compare dataset types and storage locations with a selected source project, then clone output tables or stream filesystem output datasets into the current branch. Dry run previews the mapping; run mode skips input-only datasets and shared locations, and replaces existing target data only when overwrite is enabled.",
+        "description": "Compare dataset types and storage locations with a selected source project, then clone Snowflake tables, stream Filesystem datasets, or copy S3 objects server-side into the current branch. S3 copies require matching formats and partition layouts, readable connection credentials, and destination credentials with source read access. Dry run previews the mapping; run mode skips input-only datasets and shared locations, and replaces existing target data only when overwrite is enabled.",
         "icon": "fas fa-code-branch"
     },
     "impersonate": false,
@@ -18,7 +18,7 @@
             "label": "Overwrite existing datasets",
             "type": "BOOLEAN",
             "defaultValue": false,
-            "description": "Replace existing target Snowflake tables or Filesystem data in run mode. Otherwise, skip targets containing tables or files."
+            "description": "Replace existing target Snowflake tables or Filesystem/S3 data in run mode. Otherwise, skip targets containing tables or files."
         },
         {
             "name": "branch_project_key",

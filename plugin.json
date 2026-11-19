@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "meta": {
         "label": "Branch datasets synchronization",
-        "description": "Synchronize datasets in duplicated Dataiku project branches from a related source project using Snowflake table clones or streamed Filesystem copies. Preview dataset mappings with dry run and control whether existing target data is overwritten.",
+        "description": "Synchronize datasets in duplicated Dataiku project branches from a related source project using Snowflake table clones, streamed Filesystem copies, or S3 server-side object copies. Preview dataset mappings with dry run and control whether existing target data is overwritten.",
         "author": "michael.hoarau",
         "provider": "michael.hoarau",
         "icon": "fas fa-code-branch",
